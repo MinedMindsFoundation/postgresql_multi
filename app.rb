@@ -1,10 +1,17 @@
 require 'sinatra'
 require_relative 'postgresql_ops.rb'
+require_relative 'aws_bucket.rb'
 
 class PersonalDetailsPostgreSQLApp < Sinatra::Base
 
+  # get "/" do
+  #   erb :start
+  # end
+
+  # test route to read file from AWS S3 bucket
   get "/" do
-    erb :start
+    image = generate_url("image-prototype", "nemo.png")
+    erb :bucket, locals: {image: image}
   end
 
   get "/get_info" do
