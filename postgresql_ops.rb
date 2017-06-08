@@ -1,9 +1,11 @@
 require 'pg'
 require 'fileutils'
+require 'aws-sdk'
 require_relative 'file_validation.rb'
+Aws.use_bundled_cert!  # resolves "certificate verify failed"
 load "./local_env.rb" if File.exists?("./local_env.rb")
 
-# Method to open a connection to the PostgreSQL database
+# Method to open a connection to AWS-hosted PostgreSQL database
 def open_db()
   begin
     # connect to the database
@@ -19,6 +21,16 @@ def open_db()
     puts 'Exception occurred'
     puts e.message
   end
+end
+
+# Method to connect to AWS S3 bucket
+def connect_to_s3()
+  Aws::S3::Client.new(
+    access_key_id: ENV['S3_KEY'],
+    secret_access_key: ENV['S3_SECRET'],
+    region: ENV['AWS_REGION'],
+    force_path_style: ENV['PATH_STYLE']
+  )
 end
 
 # Method to return user hash from PostgreSQL db for specified user
@@ -77,8 +89,6 @@ def validate_file(user_hash)
   file_check = FileValidation.new
   file_check.validate_file(file_hash)
 end
-
-# Validate user if new record?
 
 # Method to determine if value is too long or if user in current user hash is already in JSON file
 def check_values(user_hash)
@@ -143,26 +153,39 @@ def write_db(user_hash)
   end
 end
 
+# Method to save uploaded file to temp directory
 def write_image(user_hash)
-  begin
-    conn = open_db() # open database for updating
-    max_id = conn.exec("select max(id) from details")[0]  # determine current max index (id) in details table
-    max_id["max"] == nil ? v_id = 1 : v_id = max_id["max"].to_i  # set index variable based on current max index value
-    image_path = "./public/images/uploads/#{v_id}"
-    unless File.directory?(image_path)  # create directory for image
-      FileUtils.mkdir_p(image_path)
-    end
-    image = File.binread(user_hash["image"][:tempfile])  # open image file
-    f = File.new "#{image_path}/#{user_hash["image"][:filename]}", "wb"
-    f.write(image)
-    f.close if f
-    return "#{image_path}/#{user_hash["image"][:filename]}"
-  rescue PG::Error => e
-    puts 'Exception occurred'
-    puts e.message
-  ensure
-    conn.close if conn
+  tmp_dir = "./public/tmp"
+  image = File.binread(user_hash["image"][:tempfile])  # open image file
+  f = File.new "#{tmp_dir}/#{user_hash["image"][:filename]}", "wb"
+  f.write(image)
+  f.close if f
+  save_file_to_s3_bucket(user_hash)
+end
+
+# Method to clean up temp file after uploading to AWS S3 bucket
+def cleanup_tmp_file(file)
+  image_path = "./public/tmp/#{file}"
+  if File.exist?(image_path)
+    File.delete(image_path)
   end
+end
+
+# Method to upload file to AWS S3 bucket if not already present
+def save_file_to_s3_bucket(user_hash)
+    bucket = "image-prototype"
+    age = user_hash["age"]  # determine age to use for image directory
+    file = user_hash["image"][:filename]
+    image_path = "./public/tmp/#{user_hash["image"][:filename]}"  # copy image from tmp directory to S3 bucket
+    connect_to_s3()
+    s3 = Aws::S3::Resource.new(region: ENV['AWS_REGION'])
+    obj = s3.bucket(bucket).object("#{age}/#{file}")
+    if obj.exists?
+      cleanup_tmp_file(file)
+    else
+      obj.upload_file(image_path)
+      cleanup_tmp_file(file)
+    end
 end
 
 # Method to identify which column contains specified value
@@ -222,10 +245,13 @@ end
 
 # Method to define image path and name
 def pull_image(value)
+  bucket = "image-prototype"
   user_hash = pull_records(value)
-  id = user_hash[0]["id"]
-  image_name = user_hash[0]["image"]
-  image = "images/uploads/#{id}/#{image_name}"
+  age = user_hash[0]["age"]
+  image_name = "#{age}/#{user_hash[0]["image"]}"
+  connect_to_s3()
+  signer = Aws::S3::Presigner.new
+  url = signer.presigned_url(:get_object, bucket: bucket, key: image_name)
 end
 
 # Method to identify which table contains the specified column
