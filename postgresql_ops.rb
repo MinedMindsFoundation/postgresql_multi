@@ -252,6 +252,8 @@ def pull_image(value)
   connect_to_s3()
   signer = Aws::S3::Presigner.new
   url = signer.presigned_url(:get_object, bucket: bucket, key: image_name)
+  puts url
+  return url
 end
 
 # Method to identify which table contains the specified column

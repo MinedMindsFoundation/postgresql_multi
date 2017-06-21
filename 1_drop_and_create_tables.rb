@@ -15,20 +15,17 @@ begin
       }
   conn = PG::Connection.new(db_params)
 
-  # local database connection
-  # db_params = {
-  #   dbname:ENV['dbname'],
-  #   user:ENV['dbuser'],
-  #   password:ENV['dbpassword']
-  # }
-  # conn = PG.connect(dbname: ENV['dbname'], user: ENV['dbuser'], password: ENV['dbpassword'])
+  # drop Timbersafe tables if exists
+  # conn.exec "drop table if exists exposure_details"
+  # conn.exec "drop table if exists info_details"
+  # conn.exec "drop table if exists users"
 
   # drop details table if it exists
   conn.exec "drop table if exists details"
 
   # create the details table
   conn.exec "create table details (
-             id int primary key,
+             id bigserial primary key,
              name varchar(50),
              age int,
              image varchar(50))"
@@ -38,7 +35,7 @@ begin
 
   # create the numbers table with an implied foreign key (details_id)
   conn.exec "create table numbers (
-             id int primary key,
+             id bigserial primary key,
              details_id int,
              n1 int,
              n2 int,
@@ -49,28 +46,9 @@ begin
 
   # create the quotes table with an implied foreign key (details_id)
   conn.exec "create table quotes (
-             id int primary key,
+             id bigserial primary key,
              details_id int,
              quote varchar(255))"
-
-=begin
-
-  # Keep for future reference, but don't use db for images
-  # - severely inflates database size
-  # - doesn't scale well for serving up images
-  # - impacts backup/recovery times
-
-  # drop images table if it exists
-  conn.exec "drop table if exists images"
-
-  # create an image table with implied foreign key (details_id)
-  conn.exec "create table images (
-      id int primary key,
-      details_id int,
-      image bytea
-    )"
-
-=end
 
 rescue PG::Error => e
 
