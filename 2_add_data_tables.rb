@@ -5,7 +5,7 @@ load "./local_env.rb" if File.exists?("./local_env.rb")
 
 begin
 
-# ------- initialize user data sets, DB connection and ID -------
+# ------- initialize user data sets, DB connection and record ID -------
 
   # user data sets
   user_1 = ["John", 41, "user_1.png", 7, 11, 3, "Research is what I'm doing when I don't know what I'm doing."]
@@ -29,6 +29,11 @@ begin
         password:ENV['dbpassword']
       }
   conn = PG::Connection.new(db_params)
+
+
+  # ----- logic to increment record ID
+  # ----- typically not needed if using BIGSERIAL data type
+  # ----- but using here to ensure relationships for partial records
 
   # determine current max index (id) in details table
   max_id = conn.exec("select max(id) from details")[0]
@@ -121,17 +126,6 @@ begin
 
   # deallocate prepared statement variable (avoid error "prepared statement already exists")
   conn.exec("deallocate q_statement")
-
-  # # prepare SQL statement to insert user quote into quotes table
-  # conn.prepare('q_statement',
-  #              "insert into quotes (id, details_id, quote)
-  #               values($1, $2, $3)")  # bind parameters
-
-  # # execute prepared SQL statement
-  # conn.exec_prepared('q_statement', [v_id, v_id, v_quote])
-
-  # # deallocate prepared statement variable (avoid error "prepared statement already exists")
-  # conn.exec("deallocate q_statement")
 
   v_id += 1
 
