@@ -7,4 +7,5 @@ join quotes q on d.id = q.details_id
 --or d.name like 'Ji%'
 --where n.n2::text = '2'
 --where n.n2::text like '2%'
+--where n.n2::text like '%2'
 order by d.id
