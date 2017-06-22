@@ -31,9 +31,8 @@ begin
   conn = PG::Connection.new(db_params)
 
 
-  # ----- logic to increment record ID
-  # ----- typically not needed if using BIGSERIAL data type
-  # ----- but using here to ensure relationships for partial records
+  # ----- logic to increment details table's ID
+  # ----- used for details_id in foreign tables (numbers, quotes) for relating back to details table
 
   # determine current max index (id) in details table
   max_id = conn.exec("select max(id) from details")[0]
@@ -59,33 +58,34 @@ begin
 
     # prepare SQL statement to insert user data into details table
     conn.prepare('q_statement',
-                 "insert into details (id, name, age, image)
-                  values($1, $2, $3, $4)")  # bind parameters
+                 "insert into details (name, age, image)
+                  values($1, $2, $3)")  # bind parameters
+
 
     # execute prepared SQL statement
-    conn.exec_prepared('q_statement', [v_id, v_name, v_age, v_image])
+    conn.exec_prepared('q_statement', [v_name, v_age, v_image])
 
     # deallocate prepared statement variable (avoid error "prepared statement already exists")
     conn.exec("deallocate q_statement")
 
     # prepare SQL statement to insert favorite numbers into numbers table
     conn.prepare('q_statement',
-                 "insert into numbers (id, details_id, n1, n2, n3)
-                  values($1, $2, $3, $4, $5)")  # bind parameters
+                 "insert into numbers (details_id, n1, n2, n3)
+                  values($1, $2, $3, $4)")  # bind parameters
 
     # execute prepared SQL statement
-    conn.exec_prepared('q_statement', [v_id, v_id, v_n1, v_n2, v_n3])
+    conn.exec_prepared('q_statement', [v_id, v_n1, v_n2, v_n3])
 
     # deallocate prepared statement variable (avoid error "prepared statement already exists")
     conn.exec("deallocate q_statement")
 
     # prepare SQL statement to insert user quote into quotes table
     conn.prepare('q_statement',
-                 "insert into quotes (id, details_id, quote)
-                  values($1, $2, $3)")  # bind parameters
+                  "insert into quotes (details_id, quote)
+                  values($1, $2)")  # bind parameters
 
     # execute prepared SQL statement
-    conn.exec_prepared('q_statement', [v_id, v_id, v_quote])
+    conn.exec_prepared('q_statement', [v_id, v_quote])
 
     # deallocate prepared statement variable (avoid error "prepared statement already exists")
     conn.exec("deallocate q_statement")
@@ -107,22 +107,22 @@ begin
 
   # prepare SQL statement to insert user data into details table
   conn.prepare('q_statement',
-               "insert into details (id, name)
-                values($1, $2)")  # bind parameters
+               "insert into details (name)
+                values($1)")  # bind parameters
 
   # execute prepared SQL statement
-  conn.exec_prepared('q_statement', [v_id, w_name])
+  conn.exec_prepared('q_statement', [w_name])
 
   # deallocate prepared statement variable (avoid error "prepared statement already exists")
   conn.exec("deallocate q_statement")
 
   # prepare SQL statement to insert favorite numbers into numbers table
   conn.prepare('q_statement',
-               "insert into numbers (id, details_id, n1, n2, n3)
-                values($1, $2, $3, $4, $5)")  # bind parameters
+               "insert into numbers (details_id, n1, n2, n3)
+                values($1, $2, $3, $4)")  # bind parameters
 
   # execute prepared SQL statement
-  conn.exec_prepared('q_statement', [v_id, v_id, w_n1, w_n2, w_n3])
+  conn.exec_prepared('q_statement', [v_id, w_n1, w_n2, w_n3])
 
   # deallocate prepared statement variable (avoid error "prepared statement already exists")
   conn.exec("deallocate q_statement")
@@ -140,22 +140,22 @@ begin
 
   # prepare SQL statement to insert user data into details table
   conn.prepare('q_statement',
-               "insert into details (id, name, age, image)
-                values($1, $2, $3, $4)")  # bind parameters
+               "insert into details (name, age, image)
+                values($1, $2, $3)")  # bind parameters
 
   # execute prepared SQL statement
-  conn.exec_prepared('q_statement', [v_id, x_name, x_age, x_image])
+  conn.exec_prepared('q_statement', [x_name, x_age, x_image])
 
   # deallocate prepared statement variable (avoid error "prepared statement already exists")
   conn.exec("deallocate q_statement")
 
   # prepare SQL statement to insert user quote into quotes table
   conn.prepare('q_statement',
-               "insert into quotes (id, details_id, quote)
-                values($1, $2, $3)")  # bind parameters
+               "insert into quotes (details_id, quote)
+                values($1, $2)")  # bind parameters
 
   # execute prepared SQL statement
-  conn.exec_prepared('q_statement', [v_id, v_id, x_quote])
+  conn.exec_prepared('q_statement', [v_id, x_quote])
 
   # deallocate prepared statement variable (avoid error "prepared statement already exists")
   conn.exec("deallocate q_statement")
@@ -163,7 +163,7 @@ begin
   v_id += 1
 
 
-  # final partial user data set (user_7)
+  # load final partial user data set (user_7)
 
   # initialize variables for SQL insert statements
   y_name = user_7[0]
@@ -173,33 +173,33 @@ begin
 
   # prepare SQL statement to insert user data into details table
   conn.prepare('q_statement',
-               "insert into details (id, name, age)
-                values($1, $2, $3)")  # bind parameters
+               "insert into details (name, age)
+                values($1, $2)")  # bind parameters
 
   # execute prepared SQL statement
-  conn.exec_prepared('q_statement', [v_id, y_name, y_age])
+  conn.exec_prepared('q_statement', [y_name, y_age])
 
   # deallocate prepared statement variable (avoid error "prepared statement already exists")
   conn.exec("deallocate q_statement")
 
   # prepare SQL statement to insert favorite numbers into numbers table
   conn.prepare('q_statement',
-               "insert into numbers (id, details_id, n1)
-                values($1, $2, $3)")  # bind parameters
+               "insert into numbers (details_id, n1)
+                values($1, $2)")  # bind parameters
 
   # execute prepared SQL statement
-  conn.exec_prepared('q_statement', [v_id, v_id, y_n1])
+  conn.exec_prepared('q_statement', [v_id, y_n1])
 
   # deallocate prepared statement variable (avoid error "prepared statement already exists")
   conn.exec("deallocate q_statement")
 
   # prepare SQL statement to insert user quote into quotes table
   conn.prepare('q_statement',
-               "insert into quotes (id, details_id, quote)
-                values($1, $2, $3)")  # bind parameters
+               "insert into quotes (details_id, quote)
+                values($1, $2)")  # bind parameters
 
   # execute prepared SQL statement
-  conn.exec_prepared('q_statement', [v_id, v_id, y_quote])
+  conn.exec_prepared('q_statement', [v_id, y_quote])
 
   # deallocate prepared statement variable (avoid error "prepared statement already exists")
   conn.exec("deallocate q_statement")
