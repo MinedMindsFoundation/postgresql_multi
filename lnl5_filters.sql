@@ -6,10 +6,12 @@ left join quotes q on d.id = q.details_id
 --where d.name like 'Ji%'  -- partial match on beginning of string
 --where d.name like '%n'  -- partial match on end of string
 --where d.name like '%e%'  -- partial match on any part of string
---where d.name like 'Je%'  -- multiple partial matches
+--where d.name like 'Je%'  -- multiple partial matches (or)
 --or d.name like 'Ji%'
+--where d.name like '%e%'  -- multiple partial matches (and)
+--and d.name like '%n%'
 --where n.n2::text = '2'  -- equals filter for integer
 --where n.n2::text like '2%'  -- partial match on beginning of integer
---where n.n2::text like '%2'  -- partial match on end of string
---order by d.id  -- order by details table's id column
+where n.n2::text like '%2'  -- partial match on end of string
+order by d.id  -- order by details table's id column
 --order by d.name  -- order results by details table's name column
